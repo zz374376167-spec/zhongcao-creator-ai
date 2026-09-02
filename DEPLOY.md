@@ -7,61 +7,49 @@
 
 ---
 
-## ✅ 当前状态（2026-09-02）：临时公网 URL 已生效
+## ✅ 正式部署（2026-09-02）：Netlify 已上线
 
-**https://combine-parameters-cocktail-abilities.trycloudflare.com**
+**正式 URL：https://tangerine-duckanoo-b223ac.netlify.app**
 
-- 已通过公网端到端验证：分析（3 人群 / 6 痛点 / 3 卖点 / 3 策略）+ 生成（3 标题 / 正文 / 4 段脚本）全部正常。
-- 实现方式：Cloudflare Quick Tunnel（`cloudflared tunnel --url http://localhost:3000`），**无需任何账号**。
-- ⚠️ **临时性说明**：
-  - 依赖本机 `npm run dev` 持续运行；电脑关机 / 终端关闭 / 隧道重启后 URL 会失效或改变。
-  - 这是"无账号"实验性隧道，Cloudflare 不保证可用性，适合应急分享，不适合长期使用。
-  - 想让朋友**长期稳定**访问，请按下面"正式部署"方案操作一次。
+- 平台：Netlify（GitHub 登录，免费额度足够，Next.js Runtime 原生支持 Route Handlers，密钥在服务端受保护）。
+- 已通过公网端到端验证：首页 200 + analyze（3 人群 / 3 痛点 / 卖点解析）+ generate（3 标题 / 正文 / 6 段视频脚本）全部正常，`workflowStatus: succeeded`。
+- 站点可见性已设为 **Public**（普通访客无需登录即可访问）。
+- 自动部署：推送 `main` 分支到 GitHub 即自动构建发布。
 
-### 如何重新启动临时隧道（URL 会变）
+### 环境变量（Netlify → Project configuration → Environment variables）
 
-```powershell
-# 1. 先启动 dev server（项目目录）
-npm run dev
-# 2. 新开一个终端，启动隧道
-& "$env:LOCALAPPDATA\cloudflared\cloudflared.exe" tunnel --url http://localhost:3000
-# 3. 从输出中找到 "Your quick Tunnel has been created! Visit it at: https://xxx.trycloudflare.com"
-```
+| 变量 | 值 |
+|---|---|
+| `DIFY_API_URL` | `https://api.dify.ai/v1` |
+| `DIFY_ANALYZE_API_KEY` | 商品分析 Workflow 的 API Key |
+| `DIFY_CONTENT_API_KEY` | 内容生成 Workflow 的 API Key |
 
----
+### 项目信息
 
-## 正式部署：Cloudflare Pages（首选，登录只需邮箱）
-
-Vercel 登录需要手机号验证（用户登录受阻），改用 Cloudflare Pages：
-免费、邮箱验证即可登录、国内可访问、支持服务端密钥保护。
-
-### 步骤（需用户在场配合登录一次）
-
-1. **注册 / 登录 Cloudflare**：打开 https://dash.cloudflare.com/sign-up ，邮箱注册（只需收验证邮件，**无需手机号**）。
-2. **登录 CLI**：
-   ```powershell
-   npm i -D wrangler
-   npx wrangler login   # 会自动打开浏览器，点 Allow 即可
-   ```
-3. **改造为 Pages 兼容构建**（服务端路由用 Cloudflare Functions 承载）：
-   - 方案：`@cloudflare/next-on-pages` 适配器（支持 Route Handlers）
-   - 注意：该适配器对 Next.js 16 的兼容性需验证；若受阻，退回方案 C（Zeabur）。
-4. **配置环境变量**（`npx wrangler pages secret put` 或 Dashboard → Project → Settings → Variables）：
-   | 变量 | 值 |
-   |---|---|
-   | `DIFY_API_URL` | `https://api.dify.ai/v1` |
-   | `DIFY_ANALYZE_API_KEY` | 商品分析 Workflow 的 API Key |
-   | `DIFY_CONTENT_API_KEY` | 内容生成 Workflow 的 API Key |
-5. **部署**：`npx wrangler pages deploy out`（或 `next-on-pages` 产物目录），得到 `https://<项目名>.pages.dev`。
+- Netlify 项目名：`tangerine-duckanoo-b223ac`（Site ID: `88a94258-a2be-4072-8144-4bcb62aa82c5`，团队 `zheng-personal-site`）
+- 部署来源：GitHub 仓库 `zz374376167-spec/zhongcao-creator-ai`（分支 `main`）
+- 框架检测：Next.js（自动识别，构建命令 `npm run build`，发布目录 `.next`）
 
 ---
 
-## 方案 C：Zeabur（备选，GitHub 一键登录、零改造、国内快）
+## 历史方案（保留备查）
 
-- 国内团队，访问快；**用 GitHub 登录即可**（无需手机验证）。
-- Next.js 可直接部署（自动识别框架），API Routes 原生支持，无需改代码。
-- 免费额度可支撑朋友试用。
-- 步骤：https://zeabur.com 用 GitHub 登录 → 新建项目 → 部署 Git 仓库 → 填 3 个环境变量 → 绑定域名。
+### 方案 A：Cloudflare 临时隧道（应急分享用，URL 会变）
+
+- 曾用 `cloudflared tunnel --url http://localhost:3000` 生成临时 URL：`https://combine-parameters-cocktail-abilities.trycloudflare.com`（现已废弃）。
+- 依赖本机 dev server 运行，电脑关机 / 隧道重启后 URL 失效。**正式分享请用上面的 Netlify URL。**
+
+### 方案 B：Cloudflare Pages（曾计划，未采用）
+
+- 需要 `@cloudflare/next-on-pages` 适配器，对 Next.js 16 兼容性未验证，故未走此路线。
+
+### 方案 C：Zeabur（已排除）
+
+- GitHub 一键登录可行，但免费额度已取消（需购买付费服务器，用户余额 0），故放弃。
+
+### 方案 D：Vercel（已排除）
+
+- 登录需要手机号验证（用户登录受阻），故放弃。
 
 ## 本地开发
 
