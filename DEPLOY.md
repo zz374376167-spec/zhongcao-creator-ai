@@ -7,60 +7,61 @@
 
 ---
 
-## 方案 A：Vercel（推荐）
+## ✅ 当前状态（2026-09-02）：临时公网 URL 已生效
 
-Vercel 是 Next.js 官方平台，免费额度足够朋友使用，支持 API Routes 与环境变量，绑定 GitHub 后自动部署。
+**https://combine-parameters-cocktail-abilities.trycloudflare.com**
 
-### 步骤
+- 已通过公网端到端验证：分析（3 人群 / 6 痛点 / 3 卖点 / 3 策略）+ 生成（3 标题 / 正文 / 4 段脚本）全部正常。
+- 实现方式：Cloudflare Quick Tunnel（`cloudflared tunnel --url http://localhost:3000`），**无需任何账号**。
+- ⚠️ **临时性说明**：
+  - 依赖本机 `npm run dev` 持续运行；电脑关机 / 终端关闭 / 隧道重启后 URL 会失效或改变。
+  - 这是"无账号"实验性隧道，Cloudflare 不保证可用性，适合应急分享，不适合长期使用。
+  - 想让朋友**长期稳定**访问，请按下面"正式部署"方案操作一次。
 
-1. **推送到 GitHub**
-   ```bash
-   git init
-   git add .
-   git commit -m "init: 种草智作 AI"
-   git branch -M main
-   git remote add origin https://github.com/<你的用户名>/<仓库名>.git
-   git push -u origin main
+### 如何重新启动临时隧道（URL 会变）
+
+```powershell
+# 1. 先启动 dev server（项目目录）
+npm run dev
+# 2. 新开一个终端，启动隧道
+& "$env:LOCALAPPDATA\cloudflared\cloudflared.exe" tunnel --url http://localhost:3000
+# 3. 从输出中找到 "Your quick Tunnel has been created! Visit it at: https://xxx.trycloudflare.com"
+```
+
+---
+
+## 正式部署：Cloudflare Pages（首选，登录只需邮箱）
+
+Vercel 登录需要手机号验证（用户登录受阻），改用 Cloudflare Pages：
+免费、邮箱验证即可登录、国内可访问、支持服务端密钥保护。
+
+### 步骤（需用户在场配合登录一次）
+
+1. **注册 / 登录 Cloudflare**：打开 https://dash.cloudflare.com/sign-up ，邮箱注册（只需收验证邮件，**无需手机号**）。
+2. **登录 CLI**：
+   ```powershell
+   npm i -D wrangler
+   npx wrangler login   # 会自动打开浏览器，点 Allow 即可
    ```
-
-2. **导入 Vercel**
-   - 打开 https://vercel.com/new ，用 GitHub 账号登录
-   - 点击 **Import**，选择刚推送的仓库
-   - Framework Preset 自动识别为 **Next.js**，无需改动
-
-3. **配置环境变量**（Settings → Environment Variables，或导入时填写）
+3. **改造为 Pages 兼容构建**（服务端路由用 Cloudflare Functions 承载）：
+   - 方案：`@cloudflare/next-on-pages` 适配器（支持 Route Handlers）
+   - 注意：该适配器对 Next.js 16 的兼容性需验证；若受阻，退回方案 C（Zeabur）。
+4. **配置环境变量**（`npx wrangler pages secret put` 或 Dashboard → Project → Settings → Variables）：
    | 变量 | 值 |
    |---|---|
    | `DIFY_API_URL` | `https://api.dify.ai/v1` |
    | `DIFY_ANALYZE_API_KEY` | 商品分析 Workflow 的 API Key |
    | `DIFY_CONTENT_API_KEY` | 内容生成 Workflow 的 API Key |
-
-4. **Deploy**，完成后会得到一个 `https://<项目名>.vercel.app` 链接，直接发给朋友使用。
-
-5. **更新**：之后每次 `git push` 到 `main`，Vercel 都会自动重新部署。
-
-> 说明：Vercel 免费版（Hobby）函数最长执行 60s，本项目 Dify 调用设置了 95s 超时上限；
-> 通常 Dify 工作流 10~30s 内完成，若个别请求超过 60s 被截断，重新生成一次即可。
+5. **部署**：`npx wrangler pages deploy out`（或 `next-on-pages` 产物目录），得到 `https://<项目名>.pages.dev`。
 
 ---
 
-## 方案 B：GitHub Pages（不推荐，有已知限制）
+## 方案 C：Zeabur（备选，GitHub 一键登录、零改造、国内快）
 
-GitHub Pages 是**纯静态托管**，无法运行 `app/api/dify/*` 服务端路由，且环境变量在构建期被替换后直接暴露在网页源码中。
-
-如果仍想用 GitHub Pages，只有两种改造方式，都需要接受 **API Key 暴露**的风险：
-
-1. **前端直连 Dify**：把 Dify 调用从 Route Handler 移到浏览器端（`fetch("https://api.dify.ai/v1/workflows/run", ...)`）。
-   - 风险：`app-` 开头的 Key 会公开在页面源码里，任何人可盗用消耗你的 Dify 额度/费用。
-   - 还需在 Dify 控制台 → 设置 → API 访问 → CORS 中，把你的 Pages 域名加入白名单。
-
-2. **嵌入 Dify Web App 分享页**：在 Dify 控制台把工作流发布为 Web App，复制分享链接用 iframe 嵌入静态页。
-   - 优点：Key 不暴露、零改造。
-   - 缺点：页面是 Dify 原生界面，不是本项目定制的 UI 流程。
-
-**结论**：如果核心目标是"给朋友一个能用的网址"，直接选 **方案 A（Vercel）**，10 分钟内即可上线。
-
----
+- 国内团队，访问快；**用 GitHub 登录即可**（无需手机验证）。
+- Next.js 可直接部署（自动识别框架），API Routes 原生支持，无需改代码。
+- 免费额度可支撑朋友试用。
+- 步骤：https://zeabur.com 用 GitHub 登录 → 新建项目 → 部署 Git 仓库 → 填 3 个环境变量 → 绑定域名。
 
 ## 本地开发
 
